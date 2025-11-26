@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIX指数技术分析 - TradingView图表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #8b9bb4;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ffffff;
+            text-align: center;
+        }
+        
+        .chart-wrapper {
+            height: 400px;
+            position: relative;
+        }
+        
+        .tradingview-widget-container {
+            height: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .info-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #e94560;
+        }
+        
+        .info-card h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .info-card p {
+            color: #8b9bb4;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #8b9bb4;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 30px;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #8b9bb4;
+        }
+        
+        .risk-warning {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .risk-warning h4 {
+            color: #ff4757;
+            margin-bottom: 10px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            background: rgba(233, 69, 96, 0.2);
+            color: #ffffff;
+            border: 1px solid #e94560;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .nav-btn:hover {
+            background: #e94560;
+            transform: translateY(-2px);
+        }
+        
+        .symbol-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .symbol-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .symbol-btn.active {
+            background: #e94560;
+            border-color: #e94560;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 VIX指数技术分析</h1>
+            <p>实时波动率指数图表与分析工具</p>
+        </header>
+
+        <div class="symbol-selector">
+            <button class="symbol-btn active" data-symbol="CBOE:VXX">VXX</button>
+            <button class="symbol-btn" data-symbol="CBOE:VIX">VIX</button>
+            <button class="symbol-btn" data-symbol="CAPITALCOM:VIX">VIX(CFD)</button>
+            <button class="symbol-btn" data-symbol="OANDA:SPX500USD">SPX500</button>
+        </div>
+
+        <div class="navigation">
+            <a href="#technical-analysis" class="nav-btn">技术分析</a>
+            <a href="#mini-overview" class="nav-btn">迷你概览</a>
+            <a href="#market-info" class="nav-btn">市场信息</a>
+        </div>
+
+        <div class="charts-grid">
+            <!-- 技术分析图表 -->
+            <div class="chart-container" id="technical-analysis">
+                <h2 class="chart-title">VXX 技术分析</h2>
+                <div class="chart-wrapper">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget" id="technical-widget"></div>
+                        <div class="tradingview-widget-copyright">
+                            <a href="https://www.tradingview.com/symbols/CBOE-VXX/technicals/" rel="noopener nofollow" target="_blank">
+                                <span class="blue-text">VXX技术分析</span>
+                            </a> by TradingView
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 迷你概览图表 -->
+            <div class="chart-container" id="mini-overview">
+                <h2 class="chart-title">VXX 价格概览</h2>
+                <div class="chart-wrapper">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget" id="mini-widget"></div>
+                        <div class="tradingview-widget-copyright">
+                            <a href="https://www.tradingview.com/symbols/CBOE-VXX/" rel="noopener nofollow" target="_blank">
+                                <span class="blue-text">VXX价格图表</span>
+                            </a> by TradingView
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 市场信息部分 -->
+        <div class="info-section" id="market-info">
+            <h2>📈 市场信息与说明</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>什么是VIX指数？</h3>
+                    <p>VIX指数（波动率指数）是衡量S&P 500指数期权隐含波动率的指标，通常被称为"恐慌指数"。</p>
+                </div>
+                <div class="info-card">
+                    <h3>VXX ETF</h3>
+                    <p>VXX是跟踪短期VIX期货的ETF，提供对波动率指数的投资 exposure。</p>
+                </div>
+                <div class="info-card">
+                    <h3>技术分析</h3>
+                    <p>使用技术指标如RSI、MACD、布林带等来分析价格趋势和交易信号。</p>
+                </div>
+                <div class="info-card">
+                    <h3>数据来源</h3>
+                    <p>所有图表数据由TradingView提供，实时更新，专业准确。</p>
+                </div>
+            </div>
+            
+            <div class="risk-warning">
+                <h4>⚠️ 风险提示</h4>
+                <p>VIX相关产品具有高波动性，投资风险较大。本网站提供的信息仅供参考，不构成投资建议。投资者应根据自身情况谨慎决策。</p>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>© 2024 VIX技术分析工具 | 数据由TradingView提供 | 最后更新: <span id="update-time"></span></p>
+        </footer>
+    </div>
+
+    <!-- TradingView脚本 -->
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+    {
+        "colorTheme": "dark",
+        "displayMode": "single",
+        "isTransparent": false,
+        "locale": "zh_CN",
+        "interval": "1D",
+        "disableInterval": false,
+        "width": "100%",
+        "height": "100%",
+        "symbol": "CBOE:VXX",
+        "showIntervalTabs": true
+    }
+    </script>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+    {
+        "symbol": "CBOE:VXX",
+        "chartOnly": false,
+        "dateRange": "1D",
+        "noTimeScale": false,
+        "colorTheme": "dark",
+        "isTransparent": false,
+        "locale": "zh_CN",
+        "width": "100%",
+        "autosize": true,
+        "height": "100%"
+    }
+    </script>
+
+    <script>
+        // 更新页面时间
+        document.getElementById('update-time').textContent = new Date().toLocaleString('zh-CN');
+        
+        // 符号切换功能
+        document.querySelectorAll('.symbol-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有active类
+                document.querySelectorAll('.symbol-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // 添加active类到当前按钮
+                this.classList.add('active');
+                
+                const symbol = this.getAttribute('data-symbol');
+                
+                // 重新加载TradingView小部件
+                reloadTradingViewWidgets(symbol);
+            });
+        });
+        
+        function reloadTradingViewWidgets(symbol) {
+            // 移除现有小部件
+            const technicalWidget = document.getElementById('technical-widget');
+            const miniWidget = document.getElementById('mini-widget');
+            
+            technicalWidget.innerHTML = '';
+            miniWidget.innerHTML = '';
+            
+            // 创建新的技术分析小部件
+            const technicalScript = document.createElement('script');
+            technicalScript.type = 'text/javascript';
+            technicalScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+            technicalScript.async = true;
+            technicalScript.innerHTML = `
+            {
+                "colorTheme": "dark",
+                "displayMode": "single",
+                "isTransparent": false,
+                "locale": "zh_CN",
+                "interval": "1D",
+                "disableInterval": false,
+                "width": "100%",
+                "height": "100%",
+                "symbol": "${symbol}",
+                "showIntervalTabs": true
+            }`;
+            
+            // 创建新的迷你概览小部件
+            const miniScript = document.createElement('script');
+            miniScript.type = 'text/javascript';
+            miniScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
+            miniScript.async = true;
+            miniScript.innerHTML = `
+            {
+                "symbol": "${symbol}",
+                "chartOnly": false,
+                "dateRange": "1D",
+                "noTimeScale": false,
+                "colorTheme": "dark",
+                "isTransparent": false,
+                "locale": "zh_CN",
+                "width": "100%",
+                "autosize": true,
+                "height": "100%"
+            }`;
+            
+            // 添加新小部件到页面
+            technicalWidget.appendChild(technicalScript);
+            miniWidget.appendChild(miniScript);
+        }
+        
+        // 平滑滚动导航
+        document.querySelectorAll('.nav-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
